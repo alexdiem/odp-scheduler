@@ -36,6 +36,11 @@ async def send_poll(channel):
     log.debug('Send message to channel: \n{}'.format(POLL_MESSAGE))
     m = await channel.send(POLL_MESSAGE)
 
+    mid = m.id
+    log.debug('Save message ID to file: \n{}'.format(mid))
+    with open("MESSAGE_ID", 'w') as f:
+        f.write(str(mid))
+
     for emoji in POLL_EMOJIS:
         log.debug('Add reaction to poll: {}'.format(emoji))
         await m.add_reaction(emoji=emoji)
