@@ -55,6 +55,9 @@ async def on_ready():
     log.debug('Calling {} on channel.'.format(send_poll.__name__))
     await send_poll(channel)
 
+    log.debug('Shutdown poll bot.')
+    await bot.close()
+
 
 log.debug('Starting poll bot.')
 bot.run(TOKEN)
