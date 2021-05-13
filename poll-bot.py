@@ -15,7 +15,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
 # Define poll
-POLL_TITLE = "Which days can you captain next week?"
+POLL_TITLE = "Which days can you captain next week? The poll is open until midnight"
 POLL_EMOJIS = ['1️⃣', '2️⃣', '3️⃣']
 POLL_OPTIONS = [
         POLL_EMOJIS[0] + " Tuesday", 
