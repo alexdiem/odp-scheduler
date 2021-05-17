@@ -24,8 +24,6 @@ POLL_OPTIONS = [
     ]
 POLL_MESSAGE = POLL_TITLE + "\n\n" + "\n".join(POLL_OPTIONS)
 
-# Instantiate bot
-bot = commands.Bot(command_prefix='!')
 
 async def send_poll(channel):
     """Send poll message to channel and add poll reactions 
@@ -64,5 +62,9 @@ async def on_ready():
     await bot.close()
 
 
-log.debug('Starting poll bot.')
-bot.run(TOKEN)
+def run_bot():
+    # Instantiate bot
+    bot = commands.Bot(command_prefix='!')
+
+    log.debug('Starting poll bot.')
+    bot.run(TOKEN)
