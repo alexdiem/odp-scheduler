@@ -1,3 +1,4 @@
+import logger
 import poll_bot
 
 
