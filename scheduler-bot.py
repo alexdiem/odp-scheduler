@@ -22,6 +22,9 @@ CAPTAINS_PER_DAY = 2
 
 SCHEDULE = {'Tuesday': [], 'Wednesday': [], 'Thursday': []}
 
+SCHEDULER_MSG = "I'm a level 1 naive scheduling bot, and I make mistakes. " +\
+    "<@!766548029116907570> will help me fix it.\n"
+
 # Instantiate bot
 bot = commands.Bot(command_prefix='!')
 
@@ -50,14 +53,11 @@ async def manage_schedule(channel, msg_id):
     for day in days:
         log.debug('Calling {} on channel for {}.'.
             format(create_day_schedule.__name__, day))
-        captains = await create_day_schedule(day, avail[day])
+        captains = await create_day_schedule(day, avail)
         SCHEDULE[day] = captains
 
-    with open("schedule", 'a') as f:
-        f.write("{},{},{},{}\n".format(
-            date.today(), SCHEDULE['Tuesday'], SCHEDULE['Wednesday'], SCHEDULE['Thursday']
-            )
-        )
+    log.debug('Calling {} on channel.'.format(post_schedule.__name__))
+    await post_schedule(channel)
 
 
 async def read_reactions(reactions):
@@ -93,25 +93,42 @@ async def create_day_schedule(day, avail):
     # choose randomly for now
     for i in range(CAPTAINS_PER_DAY):
         try:
-            captain = random.choice(avail)
+            captain = random.choice(avail[day])
         except IndexError:
             captain = ""
 
         captains.append(captain)
 
-        for s in SCHEDULE.keys():
-            if captain in SCHEDULE[s]:
+        for s in avail.keys():
+            if captain in avail[s]:
                 log.debug('Scheduled {} on {}. Removing them from {}'.
                     format(captain, day, s))
-                SCHEDULE[s].remove(captain)  
-        
-        try:
-            avail.remove(captain) # don't pick the same person twice
-        except ValueError:
-            pass
+                avail[s].remove(captain)
 
     log.debug("Road captains for {} are {}".format(day, captains))
     return captains
+
+
+async def post_schedule(channel):
+    """Post schedule to channel.
+    """
+    log.debug('Running {}.'.format(create_day_schedule.__name__))
+    await bot.wait_until_ready()
+
+    log.debug('Saving schedule to log.')
+    with open("schedule", 'a') as f:
+        f.write("{},{},{},{}\n".format(
+            date.today(), SCHEDULE['Tuesday'], SCHEDULE['Wednesday'], SCHEDULE['Thursday']
+            )
+        )
+
+    msg = SCHEDULER_MSG +\
+        "Road captains for Tuesday are {}.\n".format(SCHEDULE['Tuesday']) +\
+        "Road captains for Wednesday are {}.\n".format(SCHEDULE['Wednesday']) +\
+        "Road captains for Thursday are {}.\n".format(SCHEDULE['Thursday'])
+
+    log.debug('Send message to channel: \n{}'.format(msg))
+    #m = await channel.send(msg)
 
 
 @bot.event
