@@ -20,6 +20,8 @@ CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 POLL_EMOJIS = {'1️⃣': 'Tuesday', '2️⃣': 'Wednesday', '3️⃣': 'Thursday'}
 CAPTAINS_PER_DAY = 2
 
+SCHEDULE = {'Tuesday': [], 'Wednesday': [], 'Thursday': []}
+
 # Instantiate bot
 bot = commands.Bot(command_prefix='!')
 
@@ -44,10 +46,18 @@ async def manage_schedule(channel, msg_id):
     avail = await read_reactions(reactions)
 
     days = POLL_EMOJIS.values()
+    schedule = []
     for day in days:
         log.debug('Calling {} on channel for {}.'.
             format(create_day_schedule.__name__, day))
-        await create_day_schedule(day, avail[day])
+        captains = await create_day_schedule(day, avail[day])
+        SCHEDULE[day] = captains
+
+    with open("schedule", 'a') as f:
+        f.write("{},{},{},{}\n".format(
+            date.today(), SCHEDULE['Tuesday'], SCHEDULE['Wednesday'], SCHEDULE['Thursday']
+            )
+        )
 
 
 async def read_reactions(reactions):
@@ -86,16 +96,22 @@ async def create_day_schedule(day, avail):
             captain = random.choice(avail)
         except IndexError:
             captain = ""
+
         captains.append(captain)
-        avail.remove(captain) # don't pick the same person twice
+
+        for s in SCHEDULE.keys():
+            if captain in SCHEDULE[s]:
+                log.debug('Scheduled {} on {}. Removing them from {}'.
+                    format(captain, day, s))
+                SCHEDULE[s].remove(captain)  
+        
+        try:
+            avail.remove(captain) # don't pick the same person twice
+        except ValueError:
+            pass
 
     log.debug("Road captains for {} are {}".format(day, captains))
-
-    with open("schedule", 'a') as f:
-        f.write("{},{},{},{}\n".format(
-            date.today(), captains[0], captains[1], captains[2]
-            )
-        )
+    return captains
 
 
 @bot.event
