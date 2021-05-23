@@ -1,5 +1,8 @@
 import os
+from sys import exit
 from dotenv import load_dotenv
+import random
+from datetime import date
 
 import discord
 from discord.ext import commands, tasks
@@ -15,29 +18,42 @@ GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
 POLL_EMOJIS = {'1️⃣': 'Tuesday', '2️⃣': 'Wednesday', '3️⃣': 'Thursday'}
+CAPTAINS_PER_DAY = 2
 
 # Instantiate bot
 bot = commands.Bot(command_prefix='!')
 
-async def read_poll_reactions(channel, msg_id):
+async def manage_schedule(channel, msg_id):
     """Read reactions on last poll message 
     """
-    log.debug('Running {}.'.format(read_poll_reactions.__name__))
+    log.debug('Running {}.'.format(manage_schedule.__name__))
     await bot.wait_until_ready()
 
-    msg = await channel.fetch_message(msg_id)
+    try:
+        msg = await channel.fetch_message(msg_id)
+    except discord.errors.NotFound:
+        log.error("Discord error: Message ID {} not found.".format(msg_id))
+        await bot.close()
+        exit()
+        
     log.debug("Got message with ID {}".format(msg_id))
         
     reactions = msg.reactions
 
-    log.debug('Calling {} on channel.'.format(create_schedule.__name__))
-    await create_schedule(reactions)
+    log.debug('Calling {} on channel.'.format(read_reactions.__name__))
+    avail = await read_reactions(reactions)
+
+    days = POLL_EMOJIS.values()
+    for day in days:
+        log.debug('Calling {} on channel for {}.'.
+            format(create_day_schedule.__name__, day))
+        await create_day_schedule(day, avail[day])
 
 
-async def create_schedule(reactions):
-    """Create road captain schedule from reactions
+async def read_reactions(reactions):
+    """Read reactions from scheduler poll
     """
-    log.debug('Running {}.'.format(create_schedule.__name__))
+    log.debug('Running {}.'.format(read_reactions.__name__))
     await bot.wait_until_ready()
 
     log.debug('Getting availability from poll.')
@@ -52,10 +68,34 @@ async def create_schedule(reactions):
                 avail[days[day_index]].append(user.display_name)
     
     log.debug('Availability is: {}'.format(avail))
+    return avail
 
 
-        
+async def create_day_schedule(day, avail):
+    """Create road captain schedule
+    """
+    log.debug('Running {}.'.format(create_day_schedule.__name__))
+    await bot.wait_until_ready()
 
+    log.debug('Choosing road captains for {}'.format(day))
+    captains = []
+    
+    # choose randomly for now
+    for i in range(CAPTAINS_PER_DAY):
+        try:
+            captain = random.choice(avail)
+        except IndexError:
+            captain = ""
+        captains.append(captain)
+        avail.remove(captain) # don't pick the same person twice
+
+    log.debug("Road captains for {} are {}".format(day, captains))
+
+    with open("schedule", 'a') as f:
+        f.write("{},{},{},{}\n".format(
+            date.today(), captains[0], captains[1], captains[2]
+            )
+        )
 
 
 @bot.event
@@ -70,13 +110,12 @@ async def on_ready():
     channel = bot.get_channel(int(CHANNEL))
     log.debug('Channel is {}'.format(channel))
 
-
     with open("MESSAGE_ID", 'r') as f:
         msg_id = int(f.readline())
     log.debug('Read poll message with ID {}.'.format(msg_id))
 
-    log.debug('Calling {} on channel.'.format(read_poll_reactions.__name__))
-    await read_poll_reactions(channel, msg_id)
+    log.debug('Calling {} on channel.'.format(manage_schedule.__name__))
+    await manage_schedule(channel, msg_id)
 
     log.debug('Shutdown poll bot.')
     await bot.close()
