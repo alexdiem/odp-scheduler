@@ -99,6 +99,10 @@ async def create_day_schedule(day, avail):
 
         captains.append(captain)
 
+        # don't pick same captain twice for one day
+        if captain in avail[day]:
+            avail[day].remove(captain)
+
         for s in avail.keys():
             if captain in avail[s] and len(avail[s]) > 2:
                 log.debug('Scheduled {} on {}. Removing them from {}'.
