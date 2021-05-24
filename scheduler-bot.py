@@ -17,10 +17,11 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
-POLL_EMOJIS = {'1️⃣': 'Tuesday', '2️⃣': 'Wednesday', '3️⃣': 'Thursday'}
+DAYS = ['Tuesday', 'Wednesday', 'Thursday']
+SCHEDULE = {DAYS[0]: [], DAYS[1]: [], DAYS[2]: []}
 CAPTAINS_PER_DAY = 2
 
-SCHEDULE = {'Tuesday': [], 'Wednesday': [], 'Thursday': []}
+POLL_EMOJIS = {'1️⃣': DAYS[0], '2️⃣': DAYS[1], '3️⃣': DAYS[2]}
 
 SCHEDULER_MSG = "I'm a level 1 naive scheduling bot, and I make mistakes. " +\
     "<@!766548029116907570> will help me fix it.\n"
@@ -75,7 +76,7 @@ async def read_reactions(reactions):
         users = await reaction.users().flatten()
         for user in users:
             if not user.bot:
-                avail[days[day_index]].append(user.display_name)
+                avail[days[day_index]].append(user)
     
     log.debug('Availability is: {}'.format(avail))
     return avail
@@ -95,7 +96,7 @@ async def create_day_schedule(day, avail):
         try:
             captain = random.choice(avail[day])
         except IndexError:
-            captain = ""
+            captain = None
 
         captains.append(captain)
 
@@ -106,10 +107,12 @@ async def create_day_schedule(day, avail):
         for s in avail.keys():
             if captain in avail[s] and len(avail[s]) > 2:
                 log.debug('Scheduled {} on {}. Removing them from {}'.
-                    format(captain, day, s))
+                    format(captain.display_name, day, s))
                 avail[s].remove(captain)
 
-    log.debug("Road captains for {} are {}".format(day, captains))
+    log.debug(
+        "Road captains for {} are {}".format(day, users_to_names(captains))
+    )
     return captains
 
 
@@ -120,19 +123,41 @@ async def post_schedule(channel):
     await bot.wait_until_ready()
 
     log.debug('Saving schedule to log.')
-    with open("schedule", 'a') as f:
-        f.write("{},{},{},{}\n".format(
-            date.today(), SCHEDULE['Tuesday'], SCHEDULE['Wednesday'], SCHEDULE['Thursday']
+    schedule_log = "{},{},{},{}\n".format(
+            date.today(), 
+            users_to_names(SCHEDULE[DAYS[0]]), 
+            users_to_names(SCHEDULE[DAYS[1]]), 
+            users_to_names(SCHEDULE[DAYS[2]])
             )
-        )
+    with open("schedule", 'a') as f:
+        f.write(schedule_log)
+    log.debug(schedule_log)
 
     msg = SCHEDULER_MSG +\
-        "Road captains for Tuesday are {}.\n".format(SCHEDULE['Tuesday']) +\
-        "Road captains for Wednesday are {}.\n".format(SCHEDULE['Wednesday']) +\
-        "Road captains for Thursday are {}.\n".format(SCHEDULE['Thursday'])
+        "Road captains for Tuesday are {}>.\n".format(
+            users_to_tags(SCHEDULE[DAYS[0]])
+            ) +\
+        "Road captains for Wednesday are {}.\n".format(
+            users_to_tags(SCHEDULE[DAYS[1]])
+            ) +\
+        "Road captains for Thursday are {}.\n".format(
+            users_to_tags(SCHEDULE[DAYS[2]])
+            )
 
     log.debug('Send message to channel: \n{}'.format(msg))
-    m = await channel.send(msg)
+    #m = await channel.send(msg)
+
+
+def users_to_names(users):
+    """Convert a list of Users to a list of user names (str).
+    """
+    return [u.display_name if u is not None else '' for u in users]
+
+
+def users_to_tags(users):
+    """Convert a list of Users to a list of tags (str).
+    """
+    return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
 
 
 @bot.event
