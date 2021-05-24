@@ -100,7 +100,7 @@ async def create_day_schedule(day, avail):
         captains.append(captain)
 
         for s in avail.keys():
-            if captain in avail[s]:
+            if captain in avail[s] and len(avail[s]) > 2:
                 log.debug('Scheduled {} on {}. Removing them from {}'.
                     format(captain, day, s))
                 avail[s].remove(captain)
