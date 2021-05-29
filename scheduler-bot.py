@@ -57,6 +57,9 @@ async def manage_schedule(channel, msg_id):
         captains = await create_day_schedule(day, avail)
         SCHEDULE[day] = captains
 
+    log.debug('Calling {}.'.format(update_logs.__name__))
+    update_logs()
+
     log.debug('Calling {} on channel.'.format(post_schedule.__name__))
     await post_schedule(channel)
 
@@ -116,12 +119,12 @@ async def create_day_schedule(day, avail):
     return captains
 
 
-async def post_schedule(channel):
-    """Post schedule to channel.
+def update_logs():
+    """Update log files.
     """
-    log.debug('Running {}.'.format(create_day_schedule.__name__))
-    await bot.wait_until_ready()
+    log.debug('Running {}.'.format(update_logs.__name__))
 
+    # log schedule to file
     log.debug('Saving schedule to log.')
     schedule_log = "{},{},{},{}\n".format(
             date.today(), 
@@ -132,6 +135,13 @@ async def post_schedule(channel):
     with open("schedule", 'a') as f:
         f.write(schedule_log)
     log.debug(schedule_log)
+
+
+async def post_schedule(channel):
+    """Post schedule to channel.
+    """
+    log.debug('Running {}.'.format(create_day_schedule.__name__))
+    await bot.wait_until_ready()
 
     msg = SCHEDULER_MSG +\
         "Road captains for Tuesday are {}>.\n".format(
