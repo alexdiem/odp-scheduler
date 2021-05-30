@@ -17,11 +17,12 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
-DAYS = ['Tuesday', 'Wednesday', 'Thursday']
-SCHEDULE = {DAYS[0]: [], DAYS[1]: [], DAYS[2]: []}
-CAPTAINS_PER_DAY = 2
+with open('POLL_OPTIONS', 'r') as f:
+    POLL_OPTIONS = eval(f.read())
 
-POLL_EMOJIS = {'1️⃣': DAYS[0], '2️⃣': DAYS[1], '3️⃣': DAYS[2]}
+DAYS = list(POLL_OPTIONS.values())
+SCHEDULE = dict((day, []) for day in DAYS)
+CAPTAINS_PER_DAY = 2
 
 SCHEDULER_MSG = "I'm a level 1 naive scheduling bot, and I make mistakes. " +\
     "<@!766548029116907570> will help me fix it.\n"
@@ -49,9 +50,7 @@ async def manage_schedule(channel, msg_id):
     log.debug('Calling {} on channel.'.format(read_reactions.__name__))
     avail = await read_reactions(reactions)
 
-    days = POLL_EMOJIS.values()
-    schedule = []
-    for day in days:
+    for day in DAYS:
         log.debug('Calling {} on channel for {}.'.
             format(create_day_schedule.__name__, day))
         captains = await create_day_schedule(day, avail)
@@ -71,17 +70,24 @@ async def read_reactions(reactions):
     await bot.wait_until_ready()
 
     log.debug('Getting availability from poll.')
-    emojis = list(POLL_EMOJIS.keys())
-    days = list(POLL_EMOJIS.values())
-    avail = {days[0]: [], days[1]: [], days[2]: []}
+    emojis = list(POLL_OPTIONS.keys())
+    avail = dict((day, []) for day in DAYS)
     for reaction in reactions:
-        day_index = emojis.index(reaction.emoji)
+        day_index = ''
+        try:
+            day_index = emojis.index(reaction.emoji)
+        except ValueError:
+            log.error("Invalid reaction found: " + reaction.emoji)
+            continue
+
         users = await reaction.users().flatten()
         for user in users:
             if not user.bot:
-                avail[days[day_index]].append(user)
+                avail[DAYS[day_index]].append(user)
     
-    log.debug('Availability is: {}'.format(avail))
+    log.debug('Availability is: {}'.format(
+        "\n".join(f'{k}: {users_to_names(v)}' for k,v in avail.items())
+    ))
     return avail
 
 
@@ -126,11 +132,9 @@ def update_logs():
 
     # log schedule to file
     log.debug('Saving schedule to log.')
-    schedule_log = "{},{},{},{}\n".format(
+    schedule_log = "{},{}\n".format(
             date.today(), 
-            users_to_names(SCHEDULE[DAYS[0]]), 
-            users_to_names(SCHEDULE[DAYS[1]]), 
-            users_to_names(SCHEDULE[DAYS[2]])
+            "\n".join(f'{k}: {users_to_names(v)}' for k,v in SCHEDULE.items())
             )
     with open("schedule", 'a') as f:
         f.write(schedule_log)
@@ -144,15 +148,7 @@ async def post_schedule(channel):
     await bot.wait_until_ready()
 
     msg = SCHEDULER_MSG +\
-        "Road captains for Tuesday are {}>.\n".format(
-            users_to_tags(SCHEDULE[DAYS[0]])
-            ) +\
-        "Road captains for Wednesday are {}.\n".format(
-            users_to_tags(SCHEDULE[DAYS[1]])
-            ) +\
-        "Road captains for Thursday are {}.\n".format(
-            users_to_tags(SCHEDULE[DAYS[2]])
-            )
+        "\n".join(f'Road captains for {k} are: {users_to_names(v)}.' for k,v in SCHEDULE.items())
 
     log.debug('Send message to channel: \n{}'.format(msg))
     #m = await channel.send(msg)
