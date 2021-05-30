@@ -16,12 +16,10 @@ CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
 # Define poll
 POLL_TITLE = "Which days can you captain next week? The poll is open until midnight"
-POLL_EMOJIS = ['1️⃣', '2️⃣']
-POLL_OPTIONS = [
-        POLL_EMOJIS[0] + " Tuesday", 
-        POLL_EMOJIS[1] + " Thursday"
-    ]
-POLL_MESSAGE = POLL_TITLE + "\n\n" + "\n".join(POLL_OPTIONS)
+with open('poll_options', 'r') as f:
+    POLL_OPTIONS = eval(f.read())
+POLL_MESSAGE = POLL_TITLE +\
+    "\n\n" + "\n".join(f'{k}: {v}' for k,v in POLL_OPTIONS.items())
 
 # Instantiate bot
 bot = commands.Bot(command_prefix='!')
@@ -33,7 +31,7 @@ async def send_poll(channel):
     await bot.wait_until_ready()
 
     log.debug('Send message to channel: \n{}'.format(POLL_MESSAGE))
-    m = await channel.send(POLL_MESSAGE)
+    #m = await channel.send(POLL_MESSAGE)
 
     mid = m.id
     log.debug('Save message ID to file: \n{}'.format(mid))
