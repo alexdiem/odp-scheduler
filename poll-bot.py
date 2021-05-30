@@ -16,11 +16,10 @@ CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
 # Define poll
 POLL_TITLE = "Which days can you captain next week? The poll is open until midnight"
-POLL_EMOJIS = ['1️⃣', '2️⃣', '3️⃣']
+POLL_EMOJIS = ['1️⃣', '2️⃣']
 POLL_OPTIONS = [
         POLL_EMOJIS[0] + " Tuesday", 
-        POLL_EMOJIS[1] + " Wednesday", 
-        POLL_EMOJIS[2] + " Thursday"
+        POLL_EMOJIS[1] + " Thursday"
     ]
 POLL_MESSAGE = POLL_TITLE + "\n\n" + "\n".join(POLL_OPTIONS)
 
