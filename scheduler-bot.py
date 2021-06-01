@@ -147,11 +147,14 @@ async def post_schedule(channel):
     log.debug('Running {}.'.format(create_day_schedule.__name__))
     await bot.wait_until_ready()
 
-    msg = SCHEDULER_MSG +\
-        "\n".join(f'Road captains for {k} are: {users_to_names(v)}.' for k,v in SCHEDULE.items())
+    msg = SCHEDULER_MSG + "\nRoad captains for this week are"
+    for k, v in SCHEDULE.items():
+        msg += f"\n\n**{k}**\n" +\
+                "\n".join(f'{t}: {c}' 
+                    for t, c in zip(["05:40", "05:50"], v))
 
     log.debug('Send message to channel: \n{}'.format(msg))
-    #m = await channel.send(msg)
+    m = await channel.send(msg)
 
 
 def users_to_names(users):
@@ -164,6 +167,12 @@ def users_to_tags(users):
     """Convert a list of Users to a list of tags (str).
     """
     return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
+
+
+def user_to_tag(user):
+    """Convert a list of Users to a list of tags (str).
+    """
+    return "<@!{}>".format(user.id) if user is not None else ''
 
 
 @bot.event
