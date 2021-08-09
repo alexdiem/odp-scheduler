@@ -1,14 +1,17 @@
+import json
+import logger
 import os
-from sys import exit
-from dotenv import load_dotenv
 import random
+
 from datetime import date
+from dotenv import load_dotenv
+from sys import exit
 
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
 
-import logger
+
 log = logger.setup_applevel_logger(file_name = 'app_debug.log')
 
 
@@ -102,6 +105,9 @@ async def create_day_schedule(day, avail):
     
     # choose randomly for now
     for i in range(CAPTAINS_PER_DAY):
+
+        #captain = prioritize_absence(day, avail)
+
         try:
             captain = random.choice(avail[day])
         except IndexError:
@@ -125,6 +131,16 @@ async def create_day_schedule(day, avail):
     return captains
 
 
+def prioritize_absence(day, avail):
+    with open('schedule') as f:
+        schedule = [json.loads(line) for line in f]
+    
+    print(schedule)
+
+    exit()
+    return None
+
+
 def update_logs():
     """Update log files.
     """
@@ -132,13 +148,16 @@ def update_logs():
 
     # log schedule to file
     log.debug('Saving schedule to log.')
-    schedule_log = "{},{}\n".format(
-            date.today(), 
-            "\n".join(f'{k}: {users_to_names(v)}' for k,v in SCHEDULE.items())
-            )
+
+    printable_schedule = SCHEDULE
+    for day in printable_schedule:
+        printable_schedule[day] = users_to_names(SCHEDULE[day])
+    printable_schedule['date'] = str(date.today())
+
+    json_schedule = json.dumps(printable_schedule)
     with open("schedule", 'a') as f:
-        f.write(schedule_log)
-    log.debug(schedule_log)
+        f.write('\n' + json_schedule)
+    log.debug(json_schedule)
 
 
 async def post_schedule(channel):
@@ -154,7 +173,7 @@ async def post_schedule(channel):
                     for t, c in zip(["05:40", "05:50"], v))
 
     log.debug('Send message to channel: \n{}'.format(msg))
-    m = await channel.send(msg)
+    #m = await channel.send(msg)
 
 
 def users_to_names(users):
