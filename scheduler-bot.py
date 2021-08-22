@@ -181,7 +181,7 @@ async def post_schedule(channel):
     for k, v in SCHEDULE.items():
         msg += f"\n\n**{k}**\n" +\
                 "\n".join(f'{t}: {c}' 
-                    for t, c in zip(["05:40", "05:50"], v))
+                    for t, c in zip(["Group 1", "Group 2"], v))
 
     log.debug('Send message to channel: \n{}'.format(msg))
     #m = await channel.send(msg)
