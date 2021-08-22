@@ -19,6 +19,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
+CAPTAINS = os.getenv('CAPTAINS')
 
 with open('POLL_OPTIONS', 'r') as f:
     POLL_OPTIONS = eval(f.read())
@@ -106,7 +107,7 @@ async def create_day_schedule(day, avail):
     # choose randomly for now
     for i in range(CAPTAINS_PER_DAY):
 
-        #captain = prioritize_absence(day, avail)
+        #captain = prioritise_absence(day, avail)
 
         try:
             captain = random.choice(avail[day])
@@ -131,7 +132,12 @@ async def create_day_schedule(day, avail):
     return captains
 
 
-def prioritize_absence(day, avail):
+def prioritise_absence(day, avail):
+    """Prioritise captains that have been absent longer than others
+    """
+    log.debug('Running {}.'.format(prioritise_absence.__name__))
+
+
     with open('schedule') as f:
         schedule = [json.loads(line) for line in f]
     
@@ -151,7 +157,7 @@ def update_logs():
 
     printable_schedule = SCHEDULE
     for day in printable_schedule:
-        printable_schedule[day] = users_to_names(SCHEDULE[day])
+        printable_schedule[day] = users_to_names(printable_schedule[day])
     printable_schedule['date'] = str(date.today())
 
     json_schedule = json.dumps(printable_schedule)
@@ -167,6 +173,11 @@ async def post_schedule(channel):
     await bot.wait_until_ready()
 
     msg = SCHEDULER_MSG + "\nRoad captains for this week are"
+
+    schedule_post = SCHEDULE
+    for day in schedule_post:
+        schedule_post[day] = users_to_tags(schedule_post[day])
+
     for k, v in SCHEDULE.items():
         msg += f"\n\n**{k}**\n" +\
                 "\n".join(f'{t}: {c}' 
