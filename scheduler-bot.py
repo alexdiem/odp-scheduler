@@ -24,9 +24,9 @@ CAPTAINS = os.getenv('CAPTAINS')
 with open('POLL_OPTIONS', 'r') as f:
     POLL_OPTIONS = eval(f.read())
 
-DAYS = list(POLL_OPTIONS.values())
-SCHEDULE = dict((day, []) for day in DAYS)
-CAPTAINS_PER_DAY = 2
+RIDES = list(POLL_OPTIONS.values())
+SCHEDULE = dict((ride, []) for ride in RIDES)
+CAPTAINS_PER_RIDE = 1
 
 SCHEDULER_MSG = "I'm a level 1 naive scheduling bot, and I make mistakes. " +\
     "<@!766548029116907570> will help me fix it.\n"
@@ -54,11 +54,11 @@ async def manage_schedule(channel, msg_id):
     log.debug('Calling {} on channel.'.format(read_reactions.__name__))
     avail = await read_reactions(reactions)
 
-    for day in DAYS:
+    for ride in RIDES:
         log.debug('Calling {} on channel for {}.'.
-            format(create_day_schedule.__name__, day))
-        captains = await create_day_schedule(day, avail)
-        SCHEDULE[day] = captains
+            format(create_ride_schedule.__name__, ride))
+        captains = await create_ride_schedule(ride, avail)
+        SCHEDULE[ride] = captains
 
     log.debug('Calling {}.'.format(update_logs.__name__))
     update_logs()
@@ -75,11 +75,11 @@ async def read_reactions(reactions):
 
     log.debug('Getting availability from poll.')
     emojis = list(POLL_OPTIONS.keys())
-    avail = dict((day, []) for day in DAYS)
+    avail = dict((ride, []) for ride in RIDES)
     for reaction in reactions:
-        day_index = ''
+        ride_index = ''
         try:
-            day_index = emojis.index(reaction.emoji)
+            ride_index = emojis.index(reaction.emoji)
         except ValueError:
             log.error("Invalid reaction found: " + reaction.emoji)
             continue
@@ -87,7 +87,7 @@ async def read_reactions(reactions):
         users = await reaction.users().flatten()
         for user in users:
             if not user.bot:
-                avail[DAYS[day_index]].append(user)
+                avail[RIDES[ride_index]].append(user)
     
     log.debug('Availability is: {}'.format(
         "\n".join(f'{k}: {users_to_names(v)}' for k,v in avail.items())
@@ -95,44 +95,44 @@ async def read_reactions(reactions):
     return avail
 
 
-async def create_day_schedule(day, avail):
+async def create_ride_schedule(ride, avail):
     """Create road captain schedule
     """
-    log.debug('Running {}.'.format(create_day_schedule.__name__))
+    log.debug('Running {}.'.format(create_ride_schedule.__name__))
     await bot.wait_until_ready()
 
-    log.debug('Choosing road captains for {}'.format(day))
+    log.debug('Choosing road captains for {}'.format(ride))
     captains = []
     
     # choose randomly for now
-    for i in range(CAPTAINS_PER_DAY):
+    for i in range(CAPTAINS_PER_RIDE):
 
-        #captain = prioritise_absence(day, avail)
+        #captain = prioritise_absence(ride, avail)
 
         try:
-            captain = random.choice(avail[day])
+            captain = random.choice(avail[ride])
         except IndexError:
             captain = None
 
         captains.append(captain)
 
-        # don't pick same captain twice for one day
-        if captain in avail[day]:
-            avail[day].remove(captain)
+        # don't pick same captain twice for one ride
+        if captain in avail[ride]:
+            avail[ride].remove(captain)
 
         for s in avail.keys():
             if captain in avail[s] and len(avail[s]) > 2:
                 log.debug('Scheduled {} on {}. Removing them from {}'.
-                    format(captain.display_name, day, s))
+                    format(captain.display_name, ride, s))
                 avail[s].remove(captain)
 
     log.debug(
-        "Road captains for {} are {}".format(day, users_to_names(captains))
+        "Road captains for {} are {}".format(ride, users_to_names(captains))
     )
     return captains
 
 
-def prioritise_absence(day, avail):
+def prioritise_absence(ride, avail):
     """Prioritise captains that have been absent longer than others
     """
     log.debug('Running {}.'.format(prioritise_absence.__name__))
@@ -156,8 +156,8 @@ def update_logs():
     log.debug('Saving schedule to log.')
 
     printable_schedule = SCHEDULE
-    for day in printable_schedule:
-        printable_schedule[day] = users_to_names(printable_schedule[day])
+    for ride in printable_schedule:
+        printable_schedule[ride] = users_to_names(printable_schedule[ride])
     printable_schedule['date'] = str(date.today())
 
     json_schedule = json.dumps(printable_schedule)
@@ -169,14 +169,14 @@ def update_logs():
 async def post_schedule(channel):
     """Post schedule to channel.
     """
-    log.debug('Running {}.'.format(create_day_schedule.__name__))
+    log.debug('Running {}.'.format(create_ride_schedule.__name__))
     await bot.wait_until_ready()
 
     msg = SCHEDULER_MSG + "\nRoad captains for this week are"
 
     schedule_post = SCHEDULE
-    for day in schedule_post:
-        schedule_post[day] = users_to_tags(schedule_post[day])
+    for ride in schedule_post:
+        schedule_post[ride] = users_to_tags(schedule_post[ride])
 
     for k, v in SCHEDULE.items():
         msg += f"\n\n**{k}**\n" +\
@@ -184,7 +184,7 @@ async def post_schedule(channel):
                     for t, c in zip(["Group 1", "Group 2"], v))
 
     log.debug('Send message to channel: \n{}'.format(msg))
-    #m = await channel.send(msg)
+    m = await channel.send(msg)
 
 
 def users_to_names(users):
