@@ -117,8 +117,8 @@ async def create_ride_schedule(ride, avail):
         captains.append(captain)
 
         # don't pick same captain twice for one ride
-        if captain in avail[ride]:
-            avail[ride].remove(captain)
+        #if captain in avail[ride]:
+        #    avail[ride].remove(captain)
 
         for s in avail.keys():
             if captain in avail[s] and len(avail[s]) > 2:
@@ -184,7 +184,7 @@ async def post_schedule(channel):
                     for t, c in zip(["Group 1", "Group 2"], v))
 
     log.debug('Send message to channel: \n{}'.format(msg))
-    m = await channel.send(msg)
+    #m = await channel.send(msg)
 
 
 def users_to_names(users):
@@ -196,7 +196,8 @@ def users_to_names(users):
 def users_to_tags(users):
     """Convert a list of Users to a list of tags (str).
     """
-    return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
+    #return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
+    return ["@{}".format(u) if u is not None else '' for u in users]
 
 
 def user_to_tag(user):
