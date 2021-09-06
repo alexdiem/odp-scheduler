@@ -60,6 +60,7 @@ async def manage_schedule(channel, msg_id):
         captains = await create_ride_schedule(ride, avail)
         SCHEDULE[ride] = captains
 
+
     log.debug('Calling {}.'.format(update_logs.__name__))
     update_logs()
 
@@ -155,7 +156,7 @@ def update_logs():
     # log schedule to file
     log.debug('Saving schedule to log.')
 
-    printable_schedule = SCHEDULE
+    printable_schedule = SCHEDULE.copy()
     for ride in printable_schedule:
         printable_schedule[ride] = users_to_names(printable_schedule[ride])
     printable_schedule['date'] = str(date.today())
@@ -174,11 +175,11 @@ async def post_schedule(channel):
 
     msg = SCHEDULER_MSG + "\nRoad captains for this week are"
 
-    schedule_post = SCHEDULE
+    schedule_post = SCHEDULE.copy()
     for ride in schedule_post:
         schedule_post[ride] = users_to_tags(schedule_post[ride])
 
-    for k, v in SCHEDULE.items():
+    for k, v in schedule_post.items():
         msg += f"\n\n**{k}**\n" +\
                 "\n".join(f'{t}: {c}' 
                     for t, c in zip(["Group 1", "Group 2"], v))
