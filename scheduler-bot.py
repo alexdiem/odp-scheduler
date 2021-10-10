@@ -26,9 +26,9 @@ with open('POLL_OPTIONS', 'r') as f:
 
 RIDES = list(POLL_OPTIONS.values())
 SCHEDULE = dict((ride, []) for ride in RIDES)
-CAPTAINS_PER_RIDE = 1
+CAPTAINS_PER_RIDE = zip(RIDES, [1, 1, 2, 1, 1])
 
-SCHEDULER_MSG = "I'm a level 1 naive scheduling bot, and I make mistakes. " +\
+SCHEDULER_MSG = "@channel I'm a level 1 naive scheduling bot, and I make mistakes. " +\
     "<@!766548029116907570> will help me fix it.\n"
 
 # Instantiate bot
@@ -54,10 +54,10 @@ async def manage_schedule(channel, msg_id):
     log.debug('Calling {} on channel.'.format(read_reactions.__name__))
     avail = await read_reactions(reactions)
 
-    for ride in RIDES:
+    for ride, n_cap in CAPTAINS_PER_RIDE:
         log.debug('Calling {} on channel for {}.'.
             format(create_ride_schedule.__name__, ride))
-        captains = await create_ride_schedule(ride, avail)
+        captains = await create_ride_schedule(ride, n_cap, avail)
         SCHEDULE[ride] = captains
 
 
@@ -96,7 +96,7 @@ async def read_reactions(reactions):
     return avail
 
 
-async def create_ride_schedule(ride, avail):
+async def create_ride_schedule(ride, n_cap, avail):
     """Create road captain schedule
     """
     log.debug('Running {}.'.format(create_ride_schedule.__name__))
@@ -106,7 +106,7 @@ async def create_ride_schedule(ride, avail):
     captains = []
     
     # choose randomly for now
-    for i in range(CAPTAINS_PER_RIDE):
+    for i in range(n_cap):
 
         #captain = prioritise_absence(ride, avail)
 
@@ -118,8 +118,8 @@ async def create_ride_schedule(ride, avail):
         captains.append(captain)
 
         # don't pick same captain twice for one ride
-        #if captain in avail[ride]:
-        #    avail[ride].remove(captain)
+        if captain in avail[ride]:
+            avail[ride].remove(captain)
 
         for s in avail.keys():
             if captain in avail[s] and len(avail[s]) > 2:
@@ -181,8 +181,7 @@ async def post_schedule(channel):
 
     for k, v in schedule_post.items():
         msg += f"\n\n**{k}**\n" +\
-                "\n".join(f'{t}: {c}' 
-                    for t, c in zip(["Group 1", "Group 2"], v))
+                "\n".join(f'{c}' for c in v)
 
     log.debug('Send message to channel: \n{}'.format(msg))
     m = await channel.send(msg)
@@ -197,8 +196,7 @@ def users_to_names(users):
 def users_to_tags(users):
     """Convert a list of Users to a list of tags (str).
     """
-    #return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
-    return ["@{}".format(u) if u is not None else '' for u in users]
+    return ["<@!{}>".format(u.id) if u is not None else '' for u in users]
 
 
 def user_to_tag(user):
