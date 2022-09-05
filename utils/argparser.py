@@ -22,7 +22,5 @@ def parse_command_line_arguments(parser, logger):
     logger.debug('Read command line arguments.')
     args = parser.parse_args()
     logger.debug('Command line arguments are %s', args.__repr__())
-        
     
-
     return args
