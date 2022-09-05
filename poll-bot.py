@@ -1,13 +1,18 @@
+import logger
 import os
+
 from dotenv import load_dotenv
 
-import discord
-from discord.ext import commands, tasks
-from discord.utils import get
+from discord.ext import commands
+from utils import make_arguments_parser, parse_command_line_arguments
 
-import logger
 log = logger.setup_applevel_logger(file_name = 'app_debug.log')
 
+# Parse command line arguments
+parser = make_arguments_parser()
+args = parse_command_line_arguments(parser, log)
+DEBUG = args.debug
+log.debug('Debug mode: %s', DEBUG)
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -16,7 +21,7 @@ CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
 # Define poll
 POLL_TITLE = "Which days can you captain next week? The poll is open until midnight"
-with open('POLL_OPTIONS', 'r') as f:
+with open('POLL_OPTIONS_SUMMER', 'r') as f:
     POLL_OPTIONS = eval(f.read())
 POLL_MESSAGE = POLL_TITLE +\
     "\n\n" + "\n".join(f'{k}: {v}' for k,v in POLL_OPTIONS.items())
@@ -54,12 +59,14 @@ async def on_ready():
     channel = bot.get_channel(int(CHANNEL))
     log.debug('Channel is {}'.format(channel))
 
-    log.debug('Calling {} on channel.'.format(send_poll.__name__))
-    await send_poll(channel)
+    if not DEBUG:
+        log.debug('Calling {} on channel.'.format(send_poll.__name__))
+        await send_poll(channel)
 
     log.debug('Shutdown poll bot.')
     await bot.close()
 
 
-log.debug('Starting poll bot.')
-bot.run(TOKEN)
+if __name__ == "__main__":
+    log.debug('Starting poll bot.')
+    bot.run(TOKEN)
