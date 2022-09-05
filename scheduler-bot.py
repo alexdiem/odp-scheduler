@@ -1,3 +1,4 @@
+import argparse
 import json
 import logger
 import os
@@ -13,7 +14,7 @@ from discord.utils import get
 
 
 log = logger.setup_applevel_logger(file_name = 'app_debug.log')
-
+DEBUG = False
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,7 +22,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 CAPTAINS = os.getenv('CAPTAINS')
 
-with open('POLL_OPTIONS', 'r') as f:
+with open('POLL_OPTIONS_SUMMER', 'r') as f:
     POLL_OPTIONS = eval(f.read())
 
 RIDES = list(POLL_OPTIONS.values())
@@ -63,9 +64,10 @@ async def manage_schedule(channel, msg_id):
 
     log.debug('Calling {}.'.format(update_logs.__name__))
     update_logs()
-
-    log.debug('Calling {} on channel.'.format(post_schedule.__name__))
-    await post_schedule(channel)
+    
+    if not DEBUG:
+        log.debug('Calling {} on channel.'.format(post_schedule.__name__))
+        await post_schedule(channel)
 
 
 async def read_reactions(reactions):
@@ -134,7 +136,7 @@ async def create_ride_schedule(ride, n_cap, avail):
 
 
 def prioritise_absence(ride, avail):
-    """Prioritise captains that have been absent longer than others
+    """Prioritise captains that have been absent longer than others. Not yet in use.
     """
     log.debug('Running {}.'.format(prioritise_absence.__name__))
 
@@ -143,9 +145,6 @@ def prioritise_absence(ride, avail):
         schedule = [json.loads(line) for line in f]
     
     print(schedule)
-
-    exit()
-    return None
 
 
 def update_logs():
@@ -228,5 +227,37 @@ async def on_ready():
     await bot.close()
 
 
-log.debug('Starting scheduler bot.')
-bot.run(TOKEN)
+def make_arguments_parser():
+    """Create an argparse command line argument parser.
+    """
+    parser = argparse.ArgumentParser(description='Oslo Dawn Patrol road captains scheduler bot.')
+
+    # Debug mode
+    parser.add_argument(
+        "-d", 
+        "--debug", 
+        help="Enable debug mode. Bot will not send messages to Discord.", 
+        action="store_true")
+
+    return parser
+
+
+def parse_command_line_arguments(parser):
+    """Parse arguments supplied at command line.
+    """
+    log.debug('Read command line arguments.')
+    args = parser.parse_args()
+    log.debug('Command line arguments are %s', args.__repr__())
+        
+    global DEBUG
+    DEBUG = args.debug
+    log.debug('Debug mode: %s', DEBUG)
+
+        
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = make_arguments_parser()
+    parse_command_line_arguments(parser)
+
+    log.debug('Starting scheduler bot.')
+    bot.run(TOKEN)
