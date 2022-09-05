@@ -130,5 +130,5 @@ dmypy.json
 
 # Log files
 MESSAGE_ID
-POLL_OPTIONS
+POLL_OPTIONS*
 schedule
