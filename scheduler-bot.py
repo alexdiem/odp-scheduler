@@ -1,4 +1,3 @@
-import argparse
 import json
 import logger
 import os
@@ -9,12 +8,18 @@ from dotenv import load_dotenv
 from sys import exit
 
 import discord
-from discord.ext import commands, tasks
-from discord.utils import get
+from discord.ext import commands
+
+from utils import make_arguments_parser, parse_command_line_arguments
 
 
 log = logger.setup_applevel_logger(file_name = 'app_debug.log')
-DEBUG = False
+
+# Parse command line arguments
+parser = make_arguments_parser()
+args = parse_command_line_arguments(parser, log)
+DEBUG = args.debug
+log.debug('Debug mode: %s', DEBUG)
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -226,38 +231,7 @@ async def on_ready():
     log.debug('Shutdown poll bot.')
     await bot.close()
 
-
-def make_arguments_parser():
-    """Create an argparse command line argument parser.
-    """
-    parser = argparse.ArgumentParser(description='Oslo Dawn Patrol road captains scheduler bot.')
-
-    # Debug mode
-    parser.add_argument(
-        "-d", 
-        "--debug", 
-        help="Enable debug mode. Bot will not send messages to Discord.", 
-        action="store_true")
-
-    return parser
-
-
-def parse_command_line_arguments(parser):
-    """Parse arguments supplied at command line.
-    """
-    log.debug('Read command line arguments.')
-    args = parser.parse_args()
-    log.debug('Command line arguments are %s', args.__repr__())
-        
-    global DEBUG
-    DEBUG = args.debug
-    log.debug('Debug mode: %s', DEBUG)
-
         
 if __name__ == "__main__":
-    # Parse command line arguments
-    parser = make_arguments_parser()
-    parse_command_line_arguments(parser)
-
     log.debug('Starting scheduler bot.')
     bot.run(TOKEN)
