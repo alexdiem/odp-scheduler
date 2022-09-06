@@ -3,6 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
+import discord
 from discord.ext import commands
 from utils import make_arguments_parser, parse_command_line_arguments
 
@@ -27,7 +28,9 @@ POLL_MESSAGE = POLL_TITLE +\
     "\n\n" + "\n".join(f'{k}: {v}' for k,v in POLL_OPTIONS.items())
 
 # Instantiate bot
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 async def send_poll(channel):
     """Send poll message to channel and add poll reactions 

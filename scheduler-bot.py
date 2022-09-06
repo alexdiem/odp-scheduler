@@ -38,7 +38,9 @@ SCHEDULER_MSG = "@channel I'm a level 1 naive scheduling bot, and I make mistake
     "<@!766548029116907570> will help me fix it.\n"
 
 # Instantiate bot
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 async def manage_schedule(channel, msg_id):
     """Read reactions on last poll message 
@@ -92,7 +94,7 @@ async def read_reactions(reactions):
             log.error("Invalid reaction found: " + reaction.emoji)
             continue
 
-        users = await reaction.users().flatten()
+        users = [user async for user in reaction.users()]
         for user in users:
             if not user.bot:
                 avail[RIDES[ride_index]].append(user)
