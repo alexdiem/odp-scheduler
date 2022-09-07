@@ -1,10 +1,10 @@
 name: Deploy poll bot
 
 # on commit push, run job
-on:
-  push:
-    branches:
-      - main
+on: [push]
+#  push:
+#    branches:
+#      - main
 
 jobs:
   run:
