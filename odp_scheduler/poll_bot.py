@@ -27,36 +27,36 @@ class PollBot(commands.Bot):
     async def send_poll(self, channel):
         """Send poll message to channel and add poll reactions 
         """
-        self.LOG.debug('Running {}.'.format(self.send_poll.__name__))
+        self.LOG.log_text('Running {}.'.format(self.send_poll.__name__), severity="DEBUG")
         await self.wait_until_ready()
 
-        self.LOG.debug('Send message to channel: \n{}'.format(self.POLL_MESSAGE))
+        self.LOG.log_text('Send message to channel: \n{}'.format(self.POLL_MESSAGE), severity="DEBUG")
         m = await channel.send(self.POLL_MESSAGE)
 
         mid = m.id
-        self.LOG.debug('Save message ID to file: \n{}'.format(mid))
+        self.LOG.log_text('Save message ID to file: \n{}'.format(mid), severity="DEBUG")
         with open("MESSAGE_ID", 'w') as f:
             f.write(str(mid))
 
         for emoji in self.POLL_OPTIONS.keys():
-            self.LOG.debug('Add reaction to poll: {}'.format(emoji))
+            self.LOG.log_text('Add reaction to poll: {}'.format(emoji), severity="DEBUG")
             await m.add_reaction(emoji=emoji)
 
 
     async def on_ready(self):
         """Set up variables and logging
         """
-        self.LOG.debug('Running {}'.format(self.on_ready.__name__))
+        self.LOG.log_text('Running {}'.format(self.on_ready.__name__), severity="DEBUG")
         await self.wait_until_ready()
 
-        self.LOG.debug('Logged in as {}'.format(self.user.name))
+        self.LOG.log_text('Logged in as {}'.format(self.user.name), severity="DEBUG")
 
         channel = self.get_channel(int(self.CHANNEL))
-        self.LOG.debug('Channel is {}'.format(channel))
+        self.LOG.log_text('Channel is {}'.format(channel), severity="DEBUG")
 
         if not self.DEBUG:
-            self.LOG.debug('Calling {} on channel.'.format(self.send_poll.__name__))
+            self.LOG.log_text('Calling {} on channel.'.format(self.send_poll.__name__), severity="DEBUG")
             await self.send_poll(channel)
 
-        self.LOG.debug('Shutdown poll bot.')
+        self.LOG.log_text('Shutdown poll bot.', severity="DEBUG")
         await self.close()
