@@ -33,11 +33,6 @@ class PollBot(commands.Bot):
         self.LOG.log_text('Send message to channel: \n{}'.format(self.POLL_MESSAGE), severity="DEBUG")
         m = await channel.send(self.POLL_MESSAGE)
 
-        mid = m.id
-        self.LOG.log_text('Save message ID to file: \n{}'.format(mid), severity="DEBUG")
-        with open("MESSAGE_ID", 'w') as f:
-            f.write(str(mid))
-
         for emoji in self.POLL_OPTIONS.keys():
             self.LOG.log_text('Add reaction to poll: {}'.format(emoji), severity="DEBUG")
             await m.add_reaction(emoji=emoji)
