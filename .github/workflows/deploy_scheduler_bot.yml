@@ -2,9 +2,9 @@ name: Deploy scheduler bot
 
 # on commit push, run job
 on: [push]
-#  push:
-#    branches:
-#      - main
+  push:
+    branches:
+      - main
 
 jobs:
   run:
