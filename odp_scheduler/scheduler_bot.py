@@ -5,6 +5,8 @@ import json
 import os
 import random
 
+from datetime import date
+
 
 class SchedulerBot(commands.Bot):
 
@@ -152,7 +154,7 @@ class SchedulerBot(commands.Bot):
         printable_schedule = self.SCHEDULE.copy()
         for ride in printable_schedule:
             printable_schedule[ride] = self.users_to_names(printable_schedule[ride])
-        printable_schedule['date'] = str(self.date.today())
+        printable_schedule['date'] = str(date.today())
 
         json_schedule = json.dumps(printable_schedule)
         with open("schedule", 'a') as f:
