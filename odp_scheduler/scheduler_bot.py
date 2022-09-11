@@ -177,7 +177,7 @@ class SchedulerBot(commands.Bot):
                     "\n".join(f'{c}' for c in v)
 
         self.LOG.log_text('Send message to channel: \n{}'.format(msg), severity='DEBUG')
-        #m = await channel.send(msg)
+        m = await channel.send(msg)
 
 
     def users_to_names(self, users):
