@@ -164,7 +164,7 @@ class SchedulerBot(commands.Bot):
         """Post schedule to channel.
         """
         self.LOG.log_text('Running {}.'.format(self.create_ride_schedule.__name__), severity='DEBUG')
-        await self.LOG.wait_until_ready()
+        await self.wait_until_ready()
 
         msg = self.SCHEDULER_MSG + "\nRoad captains for this week are"
 
