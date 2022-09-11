@@ -176,7 +176,7 @@ class SchedulerBot(commands.Bot):
                     "\n".join(f'{c}' for c in v)
 
         self.LOG.debug('Send message to channel: \n{}'.format(msg))
-        m = await channel.send(msg)
+        #m = await channel.send(msg)
 
 
     def users_to_names(self, users):
@@ -208,9 +208,8 @@ class SchedulerBot(commands.Bot):
         channel = self.get_channel(int(self.CHANNEL))
         self.LOG.debug('Channel is {}'.format(channel))
 
-        with open("MESSAGE_ID", 'r') as f:
-            msg_id = int(f.readline())
-        self.LOG.debug('Read poll message with ID {}.'.format(msg_id))
+        msg_id = channel.last_message_id
+        self.LOG.debug('Read last message ID {} in channel'.format(msg_id))
 
         self.LOG.debug('Calling {} on channel.'.format(self.manage_schedule.__name__))
         await self.manage_schedule(channel, msg_id)
