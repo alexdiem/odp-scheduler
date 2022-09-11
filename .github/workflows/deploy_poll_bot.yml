@@ -1,7 +1,7 @@
 name: Deploy poll bot
 
 # on commit push, run job
-on: [push]
+on:
   push:
     branches:
       - main
