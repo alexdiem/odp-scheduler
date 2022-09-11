@@ -157,8 +157,6 @@ class SchedulerBot(commands.Bot):
         printable_schedule['date'] = str(date.today())
 
         json_schedule = json.dumps(printable_schedule)
-        with open("schedule", 'a') as f:
-            f.write('\n' + json_schedule)
         self.LOG.log_text(json_schedule, severity='DEBUG')
 
 
