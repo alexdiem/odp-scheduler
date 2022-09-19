@@ -33,45 +33,45 @@ class SchedulerBot(commands.Bot):
     async def manage_schedule(self, channel, msg_id):
         """Read reactions on last poll message 
         """
-        self.LOG.log_text('Running {}.'.format(self.manage_schedule.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.manage_schedule.__name__))
         await self.wait_until_ready()
 
         try:
             msg = await channel.fetch_message(msg_id)
         except discord.errors.NotFound:
-            self.LOG.log_text("Discord error: Message ID {} not found.".format(msg_id), severity='ERROR')
+            self.log_debug("Discord error: Message ID {} not found.".format(msg_id))
             await self.close()
             exit()
             
-        self.LOG.log_text("Got message with ID {}".format(msg_id), severity='DEBUG')
+        self.log_debug("Got message with ID {}".format(msg_id))
             
         reactions = msg.reactions
 
-        self.LOG.log_text('Calling {} on channel.'.format(self.read_reactions.__name__), severity='DEBUG')
+        self.log_debug('Calling {} on channel.'.format(self.read_reactions.__name__))
         avail = await self.read_reactions(reactions)
 
         for ride, n_cap in self.CAPTAINS_PER_RIDE:
-            self.LOG.log_text('Calling {} on channel for {}.'.
-                format(self.create_ride_schedule.__name__, ride), severity='DEBUG')
+            self.log_debug('Calling {} on channel for {}.'.
+                format(self.create_ride_schedule.__name__, ride))
             captains = await self.create_ride_schedule(ride, n_cap, avail)
             self.SCHEDULE[ride] = captains
 
 
-        self.LOG.log_text('Calling {}.'.format(self.update_logs.__name__), severity='DEBUG')
+        self.log_debug('Calling {}.'.format(self.update_logs.__name__))
         self.update_logs()
         
         if not self.DEBUG:
-            self.LOG.log_text('Calling {} on channel.'.format(self.post_schedule.__name__), severity='DEBUG')
+            self.log_debug('Calling {} on channel.'.format(self.post_schedule.__name__))
             await self.post_schedule(channel)
 
 
     async def read_reactions(self, reactions):
         """Read reactions from scheduler poll
         """
-        self.LOG.log_text('Running {}.'.format(self.read_reactions.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.read_reactions.__name__))
         await self.wait_until_ready()
 
-        self.LOG.log_text('Getting availability from poll.', severity='DEBUG')
+        self.log_debug('Getting availability from poll.')
         emojis = list(self.POLL_OPTIONS.keys())
         avail = dict((ride, []) for ride in self.RIDES)
         for reaction in reactions:
@@ -79,7 +79,7 @@ class SchedulerBot(commands.Bot):
             try:
                 ride_index = emojis.index(reaction.emoji)
             except ValueError:
-                self.LOG.log_text("Invalid reaction found: {}".format(reaction.emoji), severity='ERROR')
+                self.log_error("Invalid reaction found: {}".format(reaction.emoji))
                 continue
 
             users = [user async for user in reaction.users()]
@@ -87,7 +87,7 @@ class SchedulerBot(commands.Bot):
                 if not user.bot:
                     avail[self.RIDES[ride_index]].append(user)
         
-        self.LOG.log_text('Availability is: {}'.format(
+        self.log_debug('Availability is: {}'.format(
             "\n".join(f'{k}: {self.users_to_names(v)}' for k,v in avail.items())
         ), severity='DEBUG')
         return avail
@@ -96,10 +96,10 @@ class SchedulerBot(commands.Bot):
     async def create_ride_schedule(self, ride, n_cap, avail):
         """Create road captain schedule
         """
-        self.LOG.log_text('Running {}.'.format(self.create_ride_schedule.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.create_ride_schedule.__name__))
         await self.wait_until_ready()
 
-        self.LOG.log_text('Choosing road captains for {}'.format(ride), severity='DEBUG')
+        self.log_debug('Choosing road captains for {}'.format(ride))
         captains = []
         
         # choose randomly for now
@@ -120,11 +120,11 @@ class SchedulerBot(commands.Bot):
 
             for s in avail.keys():
                 if captain in avail[s] and len(avail[s]) > 2:
-                    self.LOG.log_text('Scheduled {} on {}. Removing them from {}'.
-                        format(captain.display_name, ride, s), severity='DEBUG')
+                    self.log_debug('Scheduled {} on {}. Removing them from {}'.
+                        format(captain.display_name, ride, s))
                     avail[s].remove(captain)
 
-        self.LOG.log_text(
+        self.log_debug(
             "Road captains for {} are {}".format(ride, self.users_to_names(captains),
             severity='DEBUG')
         )
@@ -134,7 +134,7 @@ class SchedulerBot(commands.Bot):
     def prioritise_absence(self, ride, avail):
         """Prioritise captains that have been absent longer than others. Not yet in use.
         """
-        self.LOG.log_text('Running {}.'.format(self.prioritise_absence.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.prioritise_absence.__name__))
 
 
         with open('schedule') as f:
@@ -146,10 +146,10 @@ class SchedulerBot(commands.Bot):
     def update_logs(self):
         """Update log files.
         """
-        self.LOG.log_text('Running {}.'.format(self.update_logs.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.update_logs.__name__))
 
         # log schedule to file
-        self.LOG.log_text('Saving schedule to log.', severity='DEBUG')
+        self.log_debug('Saving schedule to log.')
 
         printable_schedule = self.SCHEDULE.copy()
         for ride in printable_schedule:
@@ -157,13 +157,13 @@ class SchedulerBot(commands.Bot):
         printable_schedule['date'] = str(date.today())
 
         json_schedule = json.dumps(printable_schedule)
-        self.LOG.log_text(json_schedule, severity='DEBUG')
+        self.log_debug(json_schedule)
 
 
     async def post_schedule(self, channel):
         """Post schedule to channel.
         """
-        self.LOG.log_text('Running {}.'.format(self.create_ride_schedule.__name__), severity='DEBUG')
+        self.log_debug('Running {}.'.format(self.create_ride_schedule.__name__))
         await self.wait_until_ready()
 
         msg = self.SCHEDULER_MSG + "\nRoad captains for this week are"
@@ -176,7 +176,7 @@ class SchedulerBot(commands.Bot):
             msg += f"\n\n**{k}**\n" +\
                     "\n".join(f'{c}' for c in v)
 
-        self.LOG.log_text('Send message to channel: \n{}'.format(msg), severity='DEBUG')
+        self.log_debug('Send message to channel: \n{}'.format(msg))
         m = await channel.send(msg)
 
 
@@ -201,19 +201,27 @@ class SchedulerBot(commands.Bot):
     async def on_ready(self):
         """Set up variables and logging
         """
-        self.LOG.log_text('Running {}'.format(self.on_ready.__name__), severity='DEBUG')
+        self.log_debug('Running {}'.format(self.on_ready.__name__), severity='DEBUG')
         await self.wait_until_ready()
 
-        self.LOG.log_text('Logged in as {}'.format(self.user.name), severity='DEBUG')
+        self.log_debug('Logged in as {}'.format(self.user.name), severity='DEBUG')
 
         channel = self.get_channel(int(self.CHANNEL))
-        self.LOG.log_text('Channel is {}'.format(channel), severity='DEBUG')
+        self.log_debug('Channel is {}'.format(channel), severity='DEBUG')
 
         msg_id = channel.last_message_id
-        self.LOG.log_text('Read last message ID {} in channel'.format(msg_id), severity='DEBUG')
+        self.log_debug('Read last message ID {} in channel'.format(msg_id), severity='DEBUG')
 
-        self.LOG.log_text('Calling {} on channel.'.format(self.manage_schedule.__name__), severity='DEBUG')
+        self.log_debug('Calling {} on channel.'.format(self.manage_schedule.__name__), severity='DEBUG')
         await self.manage_schedule(channel, msg_id)
 
-        self.LOG.log_text('Shutdown poll bot.', severity='DEBUG')
+        self.log_debug('Shutdown poll bot.', severity='DEBUG')
         await self.close()
+
+    
+    def log_debug(self, msg):
+        self.LOG.log_text(msg, severity="DEBUG")
+
+
+    def log_error(self, msg):
+        self.LOG.log_text(msg, severity="DEBUG")
