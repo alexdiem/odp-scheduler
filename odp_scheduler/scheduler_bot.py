@@ -37,19 +37,12 @@ class SchedulerBot(commands.Bot):
         self.log_debug('Running {}.'.format(self.manage_schedule.__name__))
         await self.wait_until_ready()
 
-        try:
-            msg = await channel.fetch_message(msg_id)
-        except discord.errors.NotFound:
-            self.log_debug("Discord error: Message ID {} not found.".format(msg_id))
-            await self.close()
-            exit()
-            
-        self.log_debug("Got message with ID {}".format(msg_id))
-            
-        reactions = msg.reactions
-
+        self.log_debug('Calling {} on channel.'.format(self.read_message.__name__))
+        self.read_message(msg_id)    
+        msg = self.log_debug("Got message with ID {}".format(msg_id))
+        
         self.log_debug('Calling {} on channel.'.format(self.read_reactions.__name__))
-        avail = await self.read_reactions(reactions)
+        avail = await self.read_reactions(msg.reactions)
 
         for ride, n_cap in self.CAPTAINS_PER_RIDE:
             self.log_debug('Calling {} on channel for {}.'.
@@ -57,13 +50,22 @@ class SchedulerBot(commands.Bot):
             captains = await self.create_ride_schedule(ride, n_cap, avail)
             self.SCHEDULE[ride] = captains
 
-
         self.log_debug('Calling {}.'.format(self.update_logs.__name__))
         self.update_logs()
         
         if not self.DEBUG:
             self.log_debug('Calling {} on channel.'.format(self.post_schedule.__name__))
             await self.post_schedule(channel)
+
+
+    async def read_message(self, msg_id):
+        try:
+            msg = await channel.fetch_message(msg_id)
+            return msg
+        except discord.errors.NotFound:
+            self.log_debug("Discord error: Message ID {} not found.".format(msg_id))
+            self.shudown_bot()
+            exit()
 
 
     async def read_reactions(self, reactions):
@@ -90,7 +92,7 @@ class SchedulerBot(commands.Bot):
         
         self.log_debug('Availability is: {}'.format(
             "\n".join(f'{k}: {self.users_to_names(v)}' for k,v in avail.items())
-        ), severity='DEBUG')
+        ))
         return avail
 
 
@@ -126,8 +128,7 @@ class SchedulerBot(commands.Bot):
                     avail[s].remove(captain)
 
         self.log_debug(
-            "Road captains for {} are {}".format(ride, self.users_to_names(captains),
-            severity='DEBUG')
+            "Road captains for {} are {}".format(ride, self.users_to_names(captains))
         )
         return captains
 
@@ -218,6 +219,7 @@ class SchedulerBot(commands.Bot):
             self.log_debug("Couldn't find a Discord message for date {}".format(yesterday.strftime("%Y%m%d")))
             msg_id = None
             await self.shudown_bot()
+            exit()
         else:
             msg_id = doc['id']
             self.log_debug('Read last message ID {} in channel'.format(msg_id))
