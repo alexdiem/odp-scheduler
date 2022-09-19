@@ -10,11 +10,12 @@ from datetime import date
 
 class SchedulerBot(commands.Bot):
 
-    def __init__(self, command_prefix, self_bot, options, log, debug=False):
+    def __init__(self, command_prefix, self_bot, options, db, log, debug=False):
         self.DEBUG = debug
+        self.db = db
         self.LOG = log
         self.CHANNEL = os.getenv('SCHEDULER_CHANNEL')
-        self.SCHEDULER_MSG = "@channel I'm a level 1 naive scheduling bot, and I make mistakes. " +\
+        self.SCHEDULER_MSG = "@everyone I'm a level 1 naive scheduling bot, and I make mistakes. " +\
                 "<@!766548029116907570> will help me fix it.\n"
 
         with open(options, 'r') as f:
