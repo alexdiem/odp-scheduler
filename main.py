@@ -1,6 +1,9 @@
-import functions_framework
 import os
 import sys
+
+import functions_framework
+import firebase_admin
+from firebase_admin import firestore
 
 from dotenv import load_dotenv
 from google.cloud import logging
@@ -11,18 +14,20 @@ from odp_scheduler.scheduler_bot import SchedulerBot
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+DEBUG = eval(os.getenv('DEBUG'))
 
 
 def run_bot(BotType, log_name):
-    DEBUG = False
+    app = firebase_admin.initialize_app()
+    db = firestore.client()
+    
     logging_client = logging.Client()
+    logging_client.setup_logging()
     logger = logging_client.logger(log_name)
-    if '--debug' in sys.argv:
-        DEBUG = True
     logger.log_text('Debug mode: {}'.format(DEBUG), severity="DEBUG")
 
     logger.log_text('Starting poll bot.', severity="DEBUG")
-    bot = BotType(command_prefix='!', self_bot=False, options='POLL_OPTIONS_SUMMER', log=logger, debug=DEBUG)
+    bot = BotType(command_prefix='!', self_bot=False, options='POLL_OPTIONS_SUMMER', db=db, log=logger, debug=DEBUG)
     bot.run(TOKEN)
     return "Success", 200
 

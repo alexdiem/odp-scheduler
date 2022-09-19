@@ -3,11 +3,14 @@ from discord.ext import commands
 
 import os
 
+from datetime import date
+
 
 class PollBot(commands.Bot):
 
-    def __init__(self, command_prefix, self_bot, options, log, debug=False):
+    def __init__(self, command_prefix, self_bot, options, db, log, debug=False):
         self.DEBUG = debug
+        self.db = db
         self.LOG = log
         self.CHANNEL = os.getenv('SCHEDULER_CHANNEL')
 
@@ -27,31 +30,41 @@ class PollBot(commands.Bot):
     async def send_poll(self, channel):
         """Send poll message to channel and add poll reactions 
         """
-        self.LOG.log_text('Running {}.'.format(self.send_poll.__name__), severity="DEBUG")
+        self.log_debug('Running {}.'.format(self.send_poll.__name__))
         await self.wait_until_ready()
 
-        self.LOG.log_text('Send message to channel: \n{}'.format(self.POLL_MESSAGE), severity="DEBUG")
-        m = await channel.send(self.POLL_MESSAGE)
+        self.log_debug('Send message to channel: \n{}'.format(self.POLL_MESSAGE))
 
-        for emoji in self.POLL_OPTIONS.keys():
-            self.LOG.log_text('Add reaction to poll: {}'.format(emoji), severity="DEBUG")
-            await m.add_reaction(emoji)
+        today = date.today()
+        doc_ref = self.db.document('odp-scheduler/messages/poll_messages/{}'.format(today.strftime("%Y%m%d")))
+        if not self.DEBUG:
+            m = await channel.send(self.POLL_MESSAGE)
+            doc_ref.set({'id': m.id})
+
+            for emoji in self.POLL_OPTIONS.keys():
+                self.LOG.log_text('Add reaction to poll: {}'.format(emoji))
+                await m.add_reaction(emoji)
+        else:
+            doc_ref.set({'id': 'debug_mode'})
 
 
     async def on_ready(self):
         """Set up variables and logging
         """
-        self.LOG.log_text('Running {}'.format(self.on_ready.__name__), severity="DEBUG")
+        self.log_debug('Running {}'.format(self.on_ready.__name__))
         await self.wait_until_ready()
 
-        self.LOG.log_text('Logged in as {}'.format(self.user.name), severity="DEBUG")
+        self.log_debug('Logged in as {}'.format(self.user.name))
 
         channel = self.get_channel(int(self.CHANNEL))
-        self.LOG.log_text('Channel is {}'.format(channel), severity="DEBUG")
+        self.log_debug('Channel is {}'.format(channel))
 
-        if not self.DEBUG:
-            self.LOG.log_text('Calling {} on channel.'.format(self.send_poll.__name__), severity="DEBUG")
-            await self.send_poll(channel)
+        self.log_debug('Calling {} on channel.'.format(self.send_poll.__name__))
+        await self.send_poll(channel)
 
-        self.LOG.log_text('Shutdown poll bot.', severity="DEBUG")
+        self.log_debug('Shutdown poll bot.')
         await self.close()
+
+
+    def log_debug(self, msg):
+        self.LOG.log_text(msg, severity="DEBUG")
