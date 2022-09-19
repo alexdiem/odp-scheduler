@@ -5,7 +5,7 @@ import json
 import os
 import random
 
-from datetime import date
+from datetime import date, timedelta
 
 
 class SchedulerBot(commands.Bot):
@@ -202,21 +202,24 @@ class SchedulerBot(commands.Bot):
     async def on_ready(self):
         """Set up variables and logging
         """
-        self.log_debug('Running {}'.format(self.on_ready.__name__), severity='DEBUG')
+        self.log_debug('Running {}'.format(self.on_ready.__name__))
         await self.wait_until_ready()
 
-        self.log_debug('Logged in as {}'.format(self.user.name), severity='DEBUG')
+        self.log_debug('Logged in as {}'.format(self.user.name))
 
         channel = self.get_channel(int(self.CHANNEL))
-        self.log_debug('Channel is {}'.format(channel), severity='DEBUG')
+        self.log_debug('Channel is {}'.format(channel))
 
-        msg_id = channel.last_message_id
-        self.log_debug('Read last message ID {} in channel'.format(msg_id), severity='DEBUG')
+        yesterday = date.today() - timedelta(days=1)
+        doc_ref = self.db.document('odp-scheduler/messages/poll_messages/{}'.format(yesterday.strftime("%Y%m%d")))
+        msg_id = doc_ref.get().to_dict()
+        print(msg_id)
+        self.log_debug('Read last message ID {} in channel'.format(msg_id))
 
-        self.log_debug('Calling {} on channel.'.format(self.manage_schedule.__name__), severity='DEBUG')
+        self.log_debug('Calling {} on channel.'.format(self.manage_schedule.__name__))
         await self.manage_schedule(channel, msg_id)
 
-        self.log_debug('Shutdown poll bot.', severity='DEBUG')
+        self.log_debug('Shutdown poll bot.')
         await self.close()
 
     

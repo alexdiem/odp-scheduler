@@ -3,6 +3,8 @@ from discord.ext import commands
 
 import os
 
+from datetime import date
+
 
 class PollBot(commands.Bot):
 
@@ -33,7 +35,8 @@ class PollBot(commands.Bot):
 
         self.log_debug('Send message to channel: \n{}'.format(self.POLL_MESSAGE))
 
-        doc_ref = self.db.document('odp-scheduler/messages/poll_messages/poll_message')
+        today = date.today()
+        doc_ref = self.db.document('odp-scheduler/messages/poll_messages/{}'.format(today.strftime("%Y%m%d")))
         if not self.DEBUG:
             m = await channel.send(self.POLL_MESSAGE)
             doc_ref.set({'id': m.id})
