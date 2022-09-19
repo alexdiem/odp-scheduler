@@ -212,13 +212,26 @@ class SchedulerBot(commands.Bot):
 
         yesterday = date.today() - timedelta(days=1)
         doc_ref = self.db.document('odp-scheduler/messages/poll_messages/{}'.format(yesterday.strftime("%Y%m%d")))
-        msg_id = doc_ref.get().to_dict()
-        print(msg_id)
-        self.log_debug('Read last message ID {} in channel'.format(msg_id))
+        doc = doc_ref.get().to_dict()
+
+        if doc == None:
+            self.log_debug("Couldn't find a Discord message for date {}".format(yesterday.strftime("%Y%m%d")))
+            msg_id = None
+            await self.shudown_bot()
+        else:
+            msg_id = doc['id']
+            self.log_debug('Read last message ID {} in channel'.format(msg_id))
+
+        if msg_id == 'debug_mode':
+            self.DEBUG = True
 
         self.log_debug('Calling {} on channel.'.format(self.manage_schedule.__name__))
         await self.manage_schedule(channel, msg_id)
 
+        self.shudown_bot()
+
+
+    async def shudown_bot(self):
         self.log_debug('Shutdown poll bot.')
         await self.close()
 
