@@ -35,7 +35,7 @@ class PollBot(commands.Bot):
 
         for emoji in self.POLL_OPTIONS.keys():
             self.LOG.log_text('Add reaction to poll: {}'.format(emoji), severity="DEBUG")
-            await m.add_reaction(emoji=emoji)
+            await m.add_reaction(emoji)
 
 
     async def on_ready(self):
