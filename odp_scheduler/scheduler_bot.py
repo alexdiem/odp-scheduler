@@ -90,7 +90,7 @@ class SchedulerBot(commands.Bot):
         
         self.log_debug('Availability is: {}'.format(
             "\n".join(f'{k}: {self.users_to_names(v)}' for k,v in avail.items())
-        ), severity='DEBUG')
+        ))
         return avail
 
 
@@ -126,8 +126,7 @@ class SchedulerBot(commands.Bot):
                     avail[s].remove(captain)
 
         self.log_debug(
-            "Road captains for {} are {}".format(ride, self.users_to_names(captains),
-            severity='DEBUG')
+            "Road captains for {} are {}".format(ride, self.users_to_names(captains))
         )
         return captains
 
