@@ -27,7 +27,7 @@ def run_bot(BotType, log_name):
     logger.log_text('Debug mode: {}'.format(DEBUG), severity="DEBUG")
 
     logger.log_text('Starting poll bot.', severity="DEBUG")
-    bot = BotType(command_prefix='!', self_bot=False, options='POLL_OPTIONS', db=db, log=logger, debug=DEBUG)
+    bot = BotType(command_prefix='!', self_bot=False, options='POLL_OPTIONS_WINTER', db=db, log=logger, debug=DEBUG)
     bot.run(TOKEN)
     return "Success", 200
 
