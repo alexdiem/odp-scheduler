@@ -23,7 +23,7 @@ class SchedulerBot(commands.Bot):
         
         self.RIDES = list(self.POLL_OPTIONS.values())
         self.SCHEDULE = dict((ride, []) for ride in self.RIDES)
-        self.CAPTAINS_PER_RIDE = zip(self.RIDES, [1, 1, 2, 1, 1])
+        self.CAPTAINS_PER_RIDE = zip(self.RIDES, [1, 1])
 
         # Instantiate bot
         intents = discord.Intents.default()
